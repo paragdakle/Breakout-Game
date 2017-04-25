@@ -1,16 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout
+<RelativeLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:orientation="vertical"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:background="@drawable/game_screen_outer_border">
+    android:layout_height="match_parent">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="30dp"
-        android:orientation="horizontal">
+        android:orientation="horizontal"
+        android:background="@drawable/game_header">
 
         <ImageView
             android:layout_width="26dp"
@@ -57,30 +57,38 @@
 
     <android.support.constraint.ConstraintLayout
         android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1"
-        android:id="@+id/container"
-        android:background="@drawable/game_screen_inner_border">
-
+        android:layout_height="match_parent"
+        android:id="@+id/container">
 
         <RelativeLayout
-            android:layout_width="match_parent"
-            android:layout_height="40dp"
+            android:layout_width="0dp"
+            android:layout_height="55dp"
             android:id="@+id/paddleContainer"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintLeft_toLeftOf="parent"
             app:layout_constraintRight_toRightOf="parent"
             app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintVertical_bias="0.99"
-            android:paddingTop="10dp"
-            android:paddingBottom="10dp">
+            android:padding="5dp"
+            android:background="@drawable/footpath">
             <View
                 android:layout_width="100dp"
                 android:layout_height="match_parent"
                 android:id="@+id/paddle"
-                android:background="@drawable/paddle_drawable"/>
+                android:background="@drawable/skateboard" />
         </RelativeLayout>
+
+        <com.hci.project.breakout.custom.GameView
+            android:layout_width="0dp"
+            android:layout_height="550dp"
+            android:id="@+id/gameView"
+            android:src="@drawable/ic_ball"
+            app:layout_constraintLeft_toLeftOf="parent"
+            app:layout_constraintRight_toRightOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toTopOf="@+id/paddleContainer"
+            app:layout_constraintVertical_bias="0.448" />
 
     </android.support.constraint.ConstraintLayout>
 
-</LinearLayout>
+</RelativeLayout>

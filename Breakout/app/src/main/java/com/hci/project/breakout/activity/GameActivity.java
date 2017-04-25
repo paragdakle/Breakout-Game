@@ -7,7 +7,12 @@ import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Point;
 import android.graphics.RectF;
+import android.hardware.Sensor;
+import android.hardware.SensorEvent;
+import android.hardware.SensorEventListener;
+import android.hardware.SensorManager;
 import android.os.Bundle;
+import android.support.constraint.ConstraintLayout;
 import android.view.Display;
 import android.view.MotionEvent;
 import android.view.SurfaceHolder;
@@ -21,18 +26,30 @@ import com.hci.project.breakout.Brick;
 import com.hci.project.breakout.Life;
 import com.hci.project.breakout.Paddle;
 import com.hci.project.breakout.R;
+import com.hci.project.breakout.custom.GameView;
 
-public class GameActivity extends Activity implements View.OnTouchListener, View.OnClickListener {
+public class GameActivity extends Activity implements View.OnTouchListener, View.OnClickListener, SensorEventListener {
 
     BreakoutView breakoutView;
     View paddleContainer;
     View paddle;
-    ImageView imgPause;
+    ImageView imgPause, imgLife1, imgLife2, imgLife3;
+    GameView gameView;
+    ConstraintLayout container;
 
     boolean isPause = false;
+    boolean hasGameStarted = false;
 
-    private int _xDelta;
-    private int _yDelta;
+    private SensorManager sensorManager;
+    private Sensor accelerometerSensor;
+
+    private int currentLifes = 3;
+    private long lastUpdateTimestamp = 0;
+    private float recent_x, recent_y, recent_z;
+    private static final int MIN_SHAKE = 600;
+    private int paddleWidth = 300;
+    public int[] paddleXRange = {0, paddleWidth};
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -44,8 +61,32 @@ public class GameActivity extends Activity implements View.OnTouchListener, View
         paddleContainer = findViewById(R.id.paddleContainer);
         paddle = findViewById(R.id.paddle);
         imgPause = (ImageView) findViewById(R.id.imgPause);
+        imgLife1 = (ImageView) findViewById(R.id.imgLife1);
+        imgLife2 = (ImageView) findViewById(R.id.imgLife2);
+        imgLife3 = (ImageView) findViewById(R.id.imgLife3);
+        gameView = (GameView) findViewById(R.id.gameView);
+        container = (ConstraintLayout) findViewById(R.id.container);
+
+//        int[] out = new int[2];
+//        Rect outRect = new Rect();
+//        container.getLocationOnScreen(out);
+//        container.getDrawingRect(outRect);
+//        ConstraintLayout.LayoutParams gameViewLayoutParams = (ConstraintLayout.LayoutParams) gameView.getLayoutParams();
+//        gameViewLayoutParams.height = container.getHeight() - paddleContainer.getHeight();
+//        gameView.setLayoutParams(gameViewLayoutParams);
 
         imgPause.setOnClickListener(this);
+
+        sensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
+        accelerometerSensor = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
+
+        RelativeLayout.LayoutParams lParams = (RelativeLayout.LayoutParams) paddle.getLayoutParams();
+        lParams.leftMargin = (paddleContainer.getWidth() / 2) - (paddle.getWidth() / 2);
+        paddle.setLayoutParams(lParams);
+
+        gameView.setPaddle(this, paddle);
+
+        initializeGame();
     }
 
     @Override
@@ -54,6 +95,7 @@ public class GameActivity extends Activity implements View.OnTouchListener, View
         super.onResume();
         paddleContainer.setOnTouchListener(this);
         paddle.setOnTouchListener(this);
+        sensorManager.registerListener(this, accelerometerSensor, SensorManager.SENSOR_DELAY_GAME);
 //        breakoutView.resume();
     }
 
@@ -62,18 +104,26 @@ public class GameActivity extends Activity implements View.OnTouchListener, View
         super.onPause();
         paddleContainer.setOnTouchListener(null);
         paddle.setOnTouchListener(null);
+        sensorManager.unregisterListener(this);
     }
 
     @Override
     public boolean onTouch(View view, MotionEvent event) {
         switch (view.getId()) {
             case R.id.paddleContainer:
+                if(!hasGameStarted) {
+                    gameView.startGame();
+                    hasGameStarted = true;
+                    return true;
+                }
                 final int X = (int) event.getRawX();
                 RelativeLayout.LayoutParams lParams;
                 switch (event.getAction() & MotionEvent.ACTION_MASK) {
                     case MotionEvent.ACTION_DOWN:
                         lParams = (RelativeLayout.LayoutParams) paddle.getLayoutParams();
                         lParams.leftMargin = X > paddle.getWidth() ? X - paddle.getWidth() : 0;
+                        paddleXRange[0] = lParams.leftMargin;
+                        paddleXRange[1] = paddleXRange[0] + paddleWidth;
                         paddle.setLayoutParams(lParams);
                         break;
                     case MotionEvent.ACTION_UP:
@@ -87,13 +137,9 @@ public class GameActivity extends Activity implements View.OnTouchListener, View
                         lParams.leftMargin = X > paddle.getWidth() ? X - paddle.getWidth() : 0;
                         if ((lParams.leftMargin + paddle.getWidth()) > view.getWidth())
                             lParams.leftMargin = view.getWidth() - paddle.getWidth();
+                        paddleXRange[0] = lParams.leftMargin;
+                        paddleXRange[1] = paddleXRange[0] + paddleWidth;
                         paddle.setLayoutParams(lParams);
-//                RelativeLayout.LayoutParams layoutParams = (RelativeLayout.LayoutParams) view.getLayoutParams();
-//                layoutParams.leftMargin = X - _xDelta;
-//                layoutParams.topMargin = Y - _yDelta;
-//                layoutParams.rightMargin = -250;
-//                layoutParams.bottomMargin = -250;
-//                view.setLayoutParams(layoutParams);
                         break;
                 }
                 paddleContainer.invalidate();
@@ -113,15 +159,87 @@ public class GameActivity extends Activity implements View.OnTouchListener, View
                     imgPause.setImageResource(R.mipmap.ic_pause);
                     paddleContainer.setOnTouchListener(this);
                     paddle.setOnTouchListener(this);
+                    sensorManager.registerListener(this, accelerometerSensor, SensorManager.SENSOR_DELAY_GAME);
                 }
                 else {
                     imgPause.setImageResource(R.mipmap.ic_play);
                     paddleContainer.setOnTouchListener(null);
                     paddle.setOnTouchListener(null);
+                    sensorManager.unregisterListener(this);
                 }
                 isPause = !isPause;
                 break;
         }
+    }
+
+    public void decreaseLife() {
+        currentLifes--;
+        switch (currentLifes) {
+            case 0:
+                imgLife1.setImageResource(R.mipmap.ic_dead);
+                break;
+            case 1:
+                imgLife2.setImageResource(R.mipmap.ic_dead);
+                break;
+            case 2:
+                imgLife3.setImageResource(R.mipmap.ic_dead);
+        }
+        hasGameStarted = false;
+        if(currentLifes == 0) endGame();
+    }
+
+    private void initializeGame() {
+        currentLifes = 3;
+        imgLife1.setImageResource(R.mipmap.ic_life);
+        imgLife2.setImageResource(R.mipmap.ic_life);
+        imgLife3.setImageResource(R.mipmap.ic_life);
+
+        gameView.initialize();
+    }
+
+    public boolean isOnPaddle(int x) {
+        return (x > paddleXRange[0] && paddleXRange[1] > x);
+    }
+
+    public int getPaddleMean() {
+        return (paddleXRange[0] + paddleXRange[1]) / 2;
+    }
+
+    public void endGame() {}
+
+
+    @Override
+    public void onSensorChanged(SensorEvent event) {
+        if(event.sensor.getType() == Sensor.TYPE_ACCELEROMETER) {
+            float new_x = event.values[0];
+            float new_y = event.values[1];
+            float new_z = event.values[2];
+
+            long currentTimestamp = System.currentTimeMillis();
+
+            if((currentTimestamp - lastUpdateTimestamp) > 100) {
+                long timeDifference = currentTimestamp - lastUpdateTimestamp;
+                lastUpdateTimestamp = currentTimestamp;
+
+                float movementSpeed = Math.abs(new_x + new_y + new_z - recent_x - recent_y - recent_z) / (timeDifference * 1000);
+
+                if(movementSpeed > MIN_SHAKE) {
+                    System.out.print(movementSpeed);
+                    System.out.print(new_x);
+                    System.out.print(new_y);
+                    System.out.print(new_z);
+                }
+
+                recent_x = new_x;
+                recent_y = new_y;
+                recent_z = new_z;
+            }
+        }
+    }
+
+    @Override
+    public void onAccuracyChanged(Sensor sensor, int accuracy) {
+
     }
 
     class BreakoutView extends SurfaceView implements Runnable {
