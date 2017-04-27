@@ -38,7 +38,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 break;
 
             case R.id.btnShowLeaderBoard:
-                Toast.makeText(MainActivity.this, "First play to see high scores!", Toast.LENGTH_LONG).show();
+                Intent i = new Intent(MainActivity.this, LeaderBoard.class);
+                startActivity(i);
+                //Toast.makeText(MainActivity.this, "First play to see high scores!", Toast.LENGTH_LONG).show();
                 break;
         }
     }
