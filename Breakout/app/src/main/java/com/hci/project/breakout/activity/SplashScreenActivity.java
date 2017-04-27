@@ -15,6 +15,7 @@ import java.util.List;
 
 public class SplashScreenActivity extends AppCompatActivity {
 
+    public static List<Scorer> listScorer = new ArrayList<>();
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -46,19 +47,19 @@ public class SplashScreenActivity extends AppCompatActivity {
         }
         @Override
         protected List<Scorer> doInBackground(Void... params) {
-            ScorersManager manager;
             List<Scorer> listScorer = new ArrayList<Scorer>();
-            int score = 10;
+
+            SharedPreferences pref = getApplicationContext().getSharedPreferences("ScorerPref", 0);
             for (int i=0;i<5;i++)
             {
-                Scorer newScorer = new Scorer("Raunak", score);
-                score = score + 10;
-                listScorer.add(newScorer);
+                String scorerString = pref.getString("Scorer"+i, null);
+                if (scorerString != null)
+                {
+                    listScorer.add(Scorer.stringToScorer(scorerString));
+                }
             }
-            System.out.println(listScorer.size());
-            manager = new ScorersManager(mContext);
-            manager.addScorers(listScorer);
-            return manager.getScorers();
+            SplashScreenActivity.listScorer = listScorer;
+            return listScorer;
         }
 
         /*Notify on success
@@ -68,14 +69,6 @@ public class SplashScreenActivity extends AppCompatActivity {
         protected void onPostExecute(List<Scorer> object) {
             super.onPostExecute(object);
 
-            SharedPreferences pref = getApplicationContext().getSharedPreferences("ScorerPref", 0);
-            SharedPreferences.Editor editor = pref.edit();
-            String keyname = "Scorer";
-            for (int i=0;i<object.size();i++)
-            {
-                editor.putString(keyname+i, object.get(i).toSharedPreferenceString());
-            }
-            editor.commit();
             Intent i = new Intent(SplashScreenActivity.this, MainActivity.class);
             startActivity(i);
             finish();

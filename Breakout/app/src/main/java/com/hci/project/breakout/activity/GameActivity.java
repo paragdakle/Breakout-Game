@@ -2,6 +2,8 @@ package com.hci.project.breakout.activity;
 
 import android.app.Activity;
 import android.content.Context;
+
+import android.content.SharedPreferences;
 import android.graphics.Point;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
@@ -19,6 +21,8 @@ import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.WindowManager;
+import android.widget.Button;
+import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.PopupWindow;
@@ -29,6 +33,7 @@ import com.hci.project.breakout.R;
 import com.hci.project.breakout.custom.GameView;
 
 import java.util.HashMap;
+import java.util.Collections;
 
 public class GameActivity extends Activity implements View.OnTouchListener, View.OnClickListener, SensorEventListener {
 
@@ -38,6 +43,7 @@ public class GameActivity extends Activity implements View.OnTouchListener, View
     TextView txtScore;
     GameView gameView;
     ConstraintLayout container;
+
     RelativeLayout parentLayout;
     PopupWindow popWindow;
 
@@ -189,6 +195,7 @@ public class GameActivity extends Activity implements View.OnTouchListener, View
     public void onClick(View v) {
         switch (v.getId()) {
             case R.id.imgPause:
+                endGame();
                 if(isPause) {
                     imgPause.setImageResource(R.mipmap.ic_pause);
                     paddleContainer.setOnTouchListener(this);
@@ -256,7 +263,50 @@ public class GameActivity extends Activity implements View.OnTouchListener, View
     }
 
     public void endGame() {
+
+        System.out.println("In end game");
+        int popupWidth = 400;
+        int popupHeight = 400;
         gameView.pauseGame();
+        popWindow = new PopupWindow(GameActivity.this);
+        LinearLayout viewGroup = (LinearLayout) GameActivity.this.findViewById(R.id.popup);
+        LayoutInflater layoutInflater = (LayoutInflater) GameActivity.this.getSystemService(LAYOUT_INFLATER_SERVICE);
+        final View layout = layoutInflater.inflate(R.layout.popup_message, viewGroup);
+        popWindow.setContentView(layout);
+        popWindow.setWidth(popupWidth);
+        popWindow.setHeight(popupHeight);
+        popWindow.setFocusable(true);
+        popWindow.update();
+
+        popWindow.showAtLocation(layout, Gravity.CENTER, 0, 0);
+
+        Button addScore = (Button) layout.findViewById(R.id.addScoreButton);
+        addScore.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                EditText score = (EditText) layout.findViewById(R.id.addScore);
+                System.out.println("Score is: " + score.getText().toString());
+                System.out.println("Score List  is: " + SplashScreenActivity.listScorer.size());
+                if (SplashScreenActivity.listScorer.size() < 5)
+                {
+                    System.out.println("Should be in here");
+                    SplashScreenActivity.listScorer.add(new Scorer(score.getText().toString(), GameActivity.this.score));
+                } else {
+                    Collections.sort(SplashScreenActivity.listScorer);
+                    if (GameActivity.this.score > SplashScreenActivity.listScorer.get(4).getScore()) {
+                        SplashScreenActivity.listScorer.set(4, new Scorer(score.getText().toString(), GameActivity.this.score));
+                    }
+                }
+                SharedPreferences pref = getApplicationContext().getSharedPreferences("ScorerPref", 0);
+                SharedPreferences.Editor editor = pref.edit();
+                String keyname = "Scorer";
+                for (int i = 0; i < SplashScreenActivity.listScorer.size(); i++) {
+                    System.out.println("Adding data "+SplashScreenActivity.listScorer.get(i).toSharedPreferenceString());
+                    editor.putString(keyname + i, SplashScreenActivity.listScorer.get(i).toSharedPreferenceString());
+                }
+                editor.commit();
+            }
+        });
     }
 
     public void playMusic(int type) {
