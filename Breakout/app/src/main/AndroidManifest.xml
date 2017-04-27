@@ -19,7 +19,7 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity android:name=".activity.LeaderBoard"
+        <activity android:name=".activity.LeaderBoardActivity"
             android:screenOrientation="portrait"/>
         <activity android:name=".activity.MainActivity"
             android:screenOrientation="portrait"/>
