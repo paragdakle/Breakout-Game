@@ -8,9 +8,10 @@
 
     <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="30dp"
+        android:layout_height="40dp"
         android:orientation="horizontal"
-        android:background="@drawable/game_header">
+        android:background="@drawable/game_header"
+        android:padding="5dp">
 
         <ImageView
             android:layout_width="26dp"
@@ -43,7 +44,7 @@
             android:padding="2dp"
             android:layout_marginEnd="10dp"
             android:layout_marginRight="10dp"
-            android:text="123456"/>
+            android:text="0"/>
 
         <ImageView
             android:layout_width="26dp"
@@ -62,15 +63,15 @@
 
         <RelativeLayout
             android:layout_width="0dp"
-            android:layout_height="55dp"
+            android:layout_height="65dp"
             android:id="@+id/paddleContainer"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintLeft_toLeftOf="parent"
             app:layout_constraintRight_toRightOf="parent"
             app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintVertical_bias="0.99"
-            android:padding="5dp"
-            android:background="@drawable/footpath">
+            app:layout_constraintVertical_bias="1.0"
+            android:background="@drawable/footpath"
+            android:padding="5dp">
             <View
                 android:layout_width="100dp"
                 android:layout_height="match_parent"
@@ -80,14 +81,12 @@
 
         <com.hci.project.breakout.custom.GameView
             android:layout_width="0dp"
-            android:layout_height="550dp"
+            android:layout_height="570dp"
             android:id="@+id/gameView"
-            android:src="@drawable/ic_ball"
             app:layout_constraintLeft_toLeftOf="parent"
             app:layout_constraintRight_toRightOf="parent"
             app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintBottom_toTopOf="@+id/paddleContainer"
-            app:layout_constraintVertical_bias="0.448" />
+            app:layout_constraintBottom_toTopOf="@+id/paddleContainer"/>
 
     </android.support.constraint.ConstraintLayout>
 

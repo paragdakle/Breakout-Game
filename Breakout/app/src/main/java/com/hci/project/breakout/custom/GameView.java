@@ -2,6 +2,7 @@ package com.hci.project.breakout.custom;
 
 import android.content.Context;
 import android.graphics.Canvas;
+import android.graphics.RectF;
 import android.graphics.drawable.BitmapDrawable;
 import android.os.Handler;
 import android.support.v4.content.ContextCompat;
@@ -21,23 +22,26 @@ public class GameView extends View {
     int ballX = -1;
     int ballY = -1;
     boolean isRestart = true;
-    int paddleX = -1;
-    int paddleY = -1;
-    int paddleWidth = 50;
-    int paddleHeight = 20;
+    boolean isNewLife = true;
+    boolean isPause = false;
     private int xVelocity = 20;
     private int yVelocity = 10;
+    private int ticker = 0;
+    private int deltaY = 120;
     private Handler h;
     private final int FRAME_RATE = 30;
     View paddle;
     GameActivity activity;
-    float[][] bricks;
+    int[][] bricks;
+    BitmapDrawable ball, brick;
 
     public GameView(Context context, AttributeSet attrs) {
         super(context, attrs);
         mContext = context;
         h = new Handler();
         activity = null;
+        ball = (BitmapDrawable) ContextCompat.getDrawable(mContext, R.drawable.volleyball);
+        brick = (BitmapDrawable) ContextCompat.getDrawable(mContext, R.drawable.brick);
     }
 
     private Runnable r = new Runnable() {
@@ -56,25 +60,39 @@ public class GameView extends View {
         h.postDelayed(r, FRAME_RATE);
     }
 
-    public void initialize() {
-        isRestart = true;
+    public void initialize(boolean fullRestart) {
+        isNewLife = true;
+        isRestart = fullRestart;
         invalidate();
     }
 
+    public void pauseGame() {
+        isPause = true;
+    }
+
+    public void resumeGame() {
+        isPause = false;
+        h.postDelayed(r, FRAME_RATE);
+    }
+
     protected void onDraw(Canvas c) {
-        BitmapDrawable ball = (BitmapDrawable) ContextCompat.getDrawable(mContext, R.drawable.ic_ball);
+        if(isPause) {
+            c.drawBitmap(ball.getBitmap(), ballX, ballY, null);
+            drawBricks(c);
+            return;
+        }
         if(isRestart) {
             int rows = 4;
             int columns = this.getWidth() / ball.getBitmap().getWidth();
-            bricks = new float[rows][columns];
+            bricks = new int[rows][columns];
             for(int i = 0; i < rows; i++) {
                 for (int j = 0; j < columns; j++) {
                     bricks[i][j] = 1;
                 }
             }
+            isRestart = false;
         }
-        drawBricks(c);
-        if ((ballX < 0 && ballY < 0) || isRestart) {
+        if ((ballX < 0 && ballY < 0) || isNewLife) {
             if(this.activity != null) {
                 ballX = activity.getPaddleMean();
             }
@@ -82,44 +100,74 @@ public class GameView extends View {
                 ballX = 50;
             ballY = this.getHeight() - ball.getBitmap().getHeight();
             c.drawBitmap(ball.getBitmap(), ballX, ballY, null);
-            isRestart = false;
+            drawBricks(c);
+            isNewLife = false;
         } else {
+            if(ticker % 50 == 0)
+                activity.increaseScore(-1);
             ballX += xVelocity;
             ballY += yVelocity;
-            if ((ballX > this.getWidth() - ball.getBitmap().getWidth()) || (ballX < 0)) {
+            if(checkIfBrickIntersects(ballX, ballY)) {
                 xVelocity = xVelocity * -1;
-            }
-            if (ballY < 0) {
                 yVelocity = yVelocity * -1;
             }
-            if((ballY > this.getHeight() - ball.getBitmap().getHeight())) {
-                if(!activity.isOnPaddle(ballX - xVelocity)) {
-                    activity.decreaseLife();
-                    initialize();
-                    return;
+            else {
+                if ((ballX > this.getWidth() - ball.getBitmap().getWidth()) || (ballX < 0)) {
+                    xVelocity = xVelocity * -1;
                 }
-                else {
+                if (ballY < 0) {
                     yVelocity = yVelocity * -1;
+                }
+                if ((ballY > this.getHeight() - ball.getBitmap().getHeight())) {
+                    if (!activity.isOnPaddle(ballX - xVelocity)) {
+                        xVelocity = 20;
+                        yVelocity = 10;
+                        activity.decreaseLife();
+                        initialize(false);
+                        return;
+                    } else {
+                        yVelocity = yVelocity * -1;
+                    }
                 }
             }
             c.drawBitmap(ball.getBitmap(), ballX, ballY, null);
+            if(!drawBricks(c)) {
+                activity.endGame();
+            }
             h.postDelayed(r, FRAME_RATE);
         }
-
+        ticker++;
     }
 
-    private void checkIfBrickIntersects(int ballX, int ballY) {
-
-    }
-
-    private void drawBricks(Canvas c) {
-        for (int j = 0; j < bricks.length; j++) {
-            for (int i = 0; i < bricks[j].length; i++) {
-                if(bricks[j][i] > 0) {
-                    BitmapDrawable brick = (BitmapDrawable) ContextCompat.getDrawable(mContext, R.drawable.brick64);
-                    c.drawBitmap(brick.getBitmap(), i * brick.getBitmap().getWidth(), 100 + (j * brick.getBitmap().getHeight()), null);
+    private boolean checkIfBrickIntersects(int ballX, int ballY) {
+        boolean hasIntersect = false;
+        RectF ballRect, brickRect;
+        ballRect = new RectF(ballX, ballY, ballX + ball.getBitmap().getWidth(), ballY + ball.getBitmap().getHeight());
+        for(int i = 0; i < bricks.length; i++) {
+            for(int j = 0; j < bricks[i].length; j++) {
+                if(bricks[i][j] == 1) {
+                    brickRect = new RectF(j * brick.getBitmap().getWidth(), (i * brick.getBitmap().getHeight()) + deltaY, (j + 1) * brick.getBitmap().getWidth(), ((i + 1) * brick.getBitmap().getHeight()) + deltaY);
+                    if(RectF.intersects(ballRect, brickRect)) {
+                        bricks[i][j] = 0;
+                        activity.increaseScore(100);
+                        hasIntersect = true;
+                    }
                 }
             }
         }
+        return hasIntersect;
+    }
+
+    private boolean drawBricks(Canvas c) {
+        boolean brickDrawn = false;
+        for (int j = 0; j < bricks.length; j++) {
+            for (int i = 0; i < bricks[j].length; i++) {
+                if(bricks[j][i] == 1) {
+                    c.drawBitmap(brick.getBitmap(), i * brick.getBitmap().getWidth(), (j * brick.getBitmap().getHeight()) + deltaY, null);
+                    brickDrawn = true;
+                }
+            }
+        }
+        return brickDrawn;
     }
 }
