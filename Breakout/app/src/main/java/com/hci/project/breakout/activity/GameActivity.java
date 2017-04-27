@@ -20,6 +20,7 @@ import android.view.SurfaceView;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.RelativeLayout;
+import android.widget.TextView;
 
 import com.hci.project.breakout.Ball;
 import com.hci.project.breakout.Brick;
@@ -34,6 +35,7 @@ public class GameActivity extends Activity implements View.OnTouchListener, View
     View paddleContainer;
     View paddle;
     ImageView imgPause, imgLife1, imgLife2, imgLife3;
+    TextView txtScore;
     GameView gameView;
     ConstraintLayout container;
 
@@ -44,9 +46,10 @@ public class GameActivity extends Activity implements View.OnTouchListener, View
     private Sensor accelerometerSensor;
 
     private int currentLifes = 3;
+    private int score = 0;
     private long lastUpdateTimestamp = 0;
     private float recent_x, recent_y, recent_z;
-    private static final int MIN_SHAKE = 600;
+    private static final int MIN_SHAKE = 6;
     private int paddleWidth = 300;
     public int[] paddleXRange = {0, paddleWidth};
 
@@ -65,6 +68,7 @@ public class GameActivity extends Activity implements View.OnTouchListener, View
         imgLife2 = (ImageView) findViewById(R.id.imgLife2);
         imgLife3 = (ImageView) findViewById(R.id.imgLife3);
         gameView = (GameView) findViewById(R.id.gameView);
+        txtScore = (TextView) findViewById(R.id.textViewScore);
         container = (ConstraintLayout) findViewById(R.id.container);
 
 //        int[] out = new int[2];
@@ -96,7 +100,7 @@ public class GameActivity extends Activity implements View.OnTouchListener, View
         paddleContainer.setOnTouchListener(this);
         paddle.setOnTouchListener(this);
         sensorManager.registerListener(this, accelerometerSensor, SensorManager.SENSOR_DELAY_GAME);
-//        breakoutView.resume();
+        gameView.resumeGame();
     }
 
     @Override
@@ -105,6 +109,7 @@ public class GameActivity extends Activity implements View.OnTouchListener, View
         paddleContainer.setOnTouchListener(null);
         paddle.setOnTouchListener(null);
         sensorManager.unregisterListener(this);
+        gameView.pauseGame();
     }
 
     @Override
@@ -159,12 +164,14 @@ public class GameActivity extends Activity implements View.OnTouchListener, View
                     imgPause.setImageResource(R.mipmap.ic_pause);
                     paddleContainer.setOnTouchListener(this);
                     paddle.setOnTouchListener(this);
+                    gameView.resumeGame();
                     sensorManager.registerListener(this, accelerometerSensor, SensorManager.SENSOR_DELAY_GAME);
                 }
                 else {
                     imgPause.setImageResource(R.mipmap.ic_play);
                     paddleContainer.setOnTouchListener(null);
                     paddle.setOnTouchListener(null);
+                    gameView.pauseGame();
                     sensorManager.unregisterListener(this);
                 }
                 isPause = !isPause;
@@ -185,16 +192,25 @@ public class GameActivity extends Activity implements View.OnTouchListener, View
                 imgLife3.setImageResource(R.mipmap.ic_dead);
         }
         hasGameStarted = false;
+        this.increaseScore(-200);
         if(currentLifes == 0) endGame();
     }
 
     private void initializeGame() {
+        if(score != 0) {
+            //show score popup
+        }
         currentLifes = 3;
         imgLife1.setImageResource(R.mipmap.ic_life);
         imgLife2.setImageResource(R.mipmap.ic_life);
         imgLife3.setImageResource(R.mipmap.ic_life);
+        gameView.initialize(true);
+        increaseScore(-score);
+    }
 
-        gameView.initialize();
+    public void increaseScore(int delta) {
+        score += delta;
+        txtScore.setText(String.valueOf(score));
     }
 
     public boolean isOnPaddle(int x) {
@@ -205,7 +221,9 @@ public class GameActivity extends Activity implements View.OnTouchListener, View
         return (paddleXRange[0] + paddleXRange[1]) / 2;
     }
 
-    public void endGame() {}
+    public void endGame() {
+        gameView.pauseGame();
+    }
 
 
     @Override
@@ -223,12 +241,12 @@ public class GameActivity extends Activity implements View.OnTouchListener, View
 
                 float movementSpeed = Math.abs(new_x + new_y + new_z - recent_x - recent_y - recent_z) / (timeDifference * 1000);
 
-                if(movementSpeed > MIN_SHAKE) {
+//                if(movementSpeed > MIN_SHAKE) {
                     System.out.print(movementSpeed);
                     System.out.print(new_x);
                     System.out.print(new_y);
                     System.out.print(new_z);
-                }
+//                }
 
                 recent_x = new_x;
                 recent_y = new_y;
