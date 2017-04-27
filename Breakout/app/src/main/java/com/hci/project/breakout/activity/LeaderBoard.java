@@ -6,6 +6,7 @@ import android.os.Bundle;
 import android.widget.TextView;
 
 import com.hci.project.breakout.R;
+import com.hci.project.breakout.model.Scorer;
 
 import java.util.ArrayList;
 import java.util.Collections;

@@ -5,4 +5,5 @@
     <color name="colorPrimaryDarkTransparent">#0Cf7550d</color>
     <color name="colorAccent">#26b8f8</color>
     <color name="splashScreenLogoColor">#FFFFFF</color>
+    <color name="shadowColor">#939393</color>
 </resources>

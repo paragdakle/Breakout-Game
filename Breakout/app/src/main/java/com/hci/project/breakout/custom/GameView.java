@@ -24,16 +24,16 @@ public class GameView extends View {
     boolean isRestart = true;
     boolean isNewLife = true;
     boolean isPause = false;
-    private int xVelocity = 20;
-    private int yVelocity = 10;
+    private int xVelocity = 30;
+    private int yVelocity = 15;
     private int ticker = 0;
-    private int deltaY = 120;
+    private int deltaY = 0;
     private Handler h;
     private final int FRAME_RATE = 30;
     View paddle;
     GameActivity activity;
     int[][] bricks;
-    BitmapDrawable ball, brick;
+    BitmapDrawable ball, brick1, brick2;
 
     public GameView(Context context, AttributeSet attrs) {
         super(context, attrs);
@@ -41,7 +41,8 @@ public class GameView extends View {
         h = new Handler();
         activity = null;
         ball = (BitmapDrawable) ContextCompat.getDrawable(mContext, R.drawable.volleyball);
-        brick = (BitmapDrawable) ContextCompat.getDrawable(mContext, R.drawable.brick);
+        brick1 = (BitmapDrawable) ContextCompat.getDrawable(mContext, R.drawable.brick);
+        brick2 = (BitmapDrawable) ContextCompat.getDrawable(mContext, R.drawable.brick64);
     }
 
     private Runnable r = new Runnable() {
@@ -87,7 +88,7 @@ public class GameView extends View {
             bricks = new int[rows][columns];
             for(int i = 0; i < rows; i++) {
                 for (int j = 0; j < columns; j++) {
-                    bricks[i][j] = 1;
+                    bricks[i][j] = 2;
                 }
             }
             isRestart = false;
@@ -110,6 +111,7 @@ public class GameView extends View {
             if(checkIfBrickIntersects(ballX, ballY)) {
                 xVelocity = xVelocity * -1;
                 yVelocity = yVelocity * -1;
+                activity.playMusic(activity.BRICK_BROKEN);
             }
             else {
                 if ((ballX > this.getWidth() - ball.getBitmap().getWidth()) || (ballX < 0)) {
@@ -119,7 +121,7 @@ public class GameView extends View {
                     yVelocity = yVelocity * -1;
                 }
                 if ((ballY > this.getHeight() - ball.getBitmap().getHeight())) {
-                    if (!activity.isOnPaddle(ballX - xVelocity)) {
+                    if (!activity.isOnPaddle(ballX - xVelocity) || !activity.isOnPaddle(ballX)) {
                         xVelocity = 20;
                         yVelocity = 10;
                         activity.decreaseLife();
@@ -145,8 +147,16 @@ public class GameView extends View {
         ballRect = new RectF(ballX, ballY, ballX + ball.getBitmap().getWidth(), ballY + ball.getBitmap().getHeight());
         for(int i = 0; i < bricks.length; i++) {
             for(int j = 0; j < bricks[i].length; j++) {
-                if(bricks[i][j] == 1) {
-                    brickRect = new RectF(j * brick.getBitmap().getWidth(), (i * brick.getBitmap().getHeight()) + deltaY, (j + 1) * brick.getBitmap().getWidth(), ((i + 1) * brick.getBitmap().getHeight()) + deltaY);
+                if(bricks[i][j] == 2) {
+                    brickRect = new RectF(j * brick2.getBitmap().getWidth(), (i * brick2.getBitmap().getHeight()) + deltaY, (j + 1) * brick2.getBitmap().getWidth(), ((i + 1) * brick1.getBitmap().getHeight()) + deltaY);
+                    if(RectF.intersects(ballRect, brickRect)) {
+                        bricks[i][j] = 1;
+                        activity.increaseScore(50);
+                        hasIntersect = true;
+                    }
+                }
+                else if(bricks[i][j] == 1) {
+                    brickRect = new RectF(j * brick1.getBitmap().getWidth(), (i * brick1.getBitmap().getHeight()) + deltaY, (j + 1) * brick1.getBitmap().getWidth(), ((i + 1) * brick1.getBitmap().getHeight()) + deltaY);
                     if(RectF.intersects(ballRect, brickRect)) {
                         bricks[i][j] = 0;
                         activity.increaseScore(100);
@@ -162,8 +172,12 @@ public class GameView extends View {
         boolean brickDrawn = false;
         for (int j = 0; j < bricks.length; j++) {
             for (int i = 0; i < bricks[j].length; i++) {
-                if(bricks[j][i] == 1) {
-                    c.drawBitmap(brick.getBitmap(), i * brick.getBitmap().getWidth(), (j * brick.getBitmap().getHeight()) + deltaY, null);
+                if(bricks[j][i] == 2) {
+                    c.drawBitmap(brick2.getBitmap(), i * brick2.getBitmap().getWidth(), (j * brick2.getBitmap().getHeight()) + deltaY, null);
+                    brickDrawn = true;
+                }
+                else if(bricks[j][i] == 1) {
+                    c.drawBitmap(brick1.getBitmap(), i * brick1.getBitmap().getWidth(), (j * brick1.getBitmap().getHeight()) + deltaY, null);
                     brickDrawn = true;
                 }
             }

@@ -5,10 +5,10 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.os.Handler;
 import android.support.v7.app.AppCompatActivity;
 
 import com.hci.project.breakout.R;
+import com.hci.project.breakout.model.Scorer;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -78,6 +78,7 @@ public class SplashScreenActivity extends AppCompatActivity {
             editor.commit();
             Intent i = new Intent(SplashScreenActivity.this, MainActivity.class);
             startActivity(i);
+            finish();
         }
     }
 

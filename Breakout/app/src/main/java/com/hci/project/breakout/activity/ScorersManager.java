@@ -7,6 +7,10 @@ import android.content.Context;
 
 //import com.example.hci.hciassignment.entity.Scorer;
 
+import com.hci.project.breakout.io.FileReader;
+import com.hci.project.breakout.io.FileWriter;
+import com.hci.project.breakout.model.Scorer;
+
 import java.util.ArrayList;
 import java.util.List;
 

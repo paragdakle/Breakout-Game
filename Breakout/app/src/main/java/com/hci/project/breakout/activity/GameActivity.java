@@ -2,42 +2,44 @@ package com.hci.project.breakout.activity;
 
 import android.app.Activity;
 import android.content.Context;
-import android.graphics.Canvas;
-import android.graphics.Color;
-import android.graphics.Paint;
 import android.graphics.Point;
-import android.graphics.RectF;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
+import android.media.AudioManager;
+import android.media.SoundPool;
 import android.os.Bundle;
+import android.os.Vibrator;
 import android.support.constraint.ConstraintLayout;
+import android.support.v4.content.ContextCompat;
 import android.view.Display;
+import android.view.Gravity;
+import android.view.LayoutInflater;
 import android.view.MotionEvent;
-import android.view.SurfaceHolder;
-import android.view.SurfaceView;
 import android.view.View;
+import android.view.WindowManager;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
+import android.widget.PopupWindow;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 
-import com.hci.project.breakout.Ball;
-import com.hci.project.breakout.Brick;
-import com.hci.project.breakout.Life;
-import com.hci.project.breakout.Paddle;
 import com.hci.project.breakout.R;
 import com.hci.project.breakout.custom.GameView;
 
+import java.util.HashMap;
+
 public class GameActivity extends Activity implements View.OnTouchListener, View.OnClickListener, SensorEventListener {
 
-    BreakoutView breakoutView;
     View paddleContainer;
     View paddle;
     ImageView imgPause, imgLife1, imgLife2, imgLife3;
     TextView txtScore;
     GameView gameView;
     ConstraintLayout container;
+    RelativeLayout parentLayout;
+    PopupWindow popWindow;
 
     boolean isPause = false;
     boolean hasGameStarted = false;
@@ -48,17 +50,25 @@ public class GameActivity extends Activity implements View.OnTouchListener, View
     private int currentLifes = 3;
     private int score = 0;
     private long lastUpdateTimestamp = 0;
-    private float recent_x, recent_y, recent_z;
-    private static final int MIN_SHAKE = 6;
+    private float recent_x;
     private int paddleWidth = 300;
     public int[] paddleXRange = {0, paddleWidth};
+
+    private SoundPool soundPool;
+    private HashMap<Integer, Integer> soundPoolMap;
+
+    public final int GAME_START = 1;
+    public final int GAME_OVER = 2;
+    public final int GAME_PAUSE = 3;
+    public final int GAME_RESUME = 4;
+    public final int BRICK_BROKEN = 5;
+    public final int LIFE_GONE = 6;
+    public final int VICTORY = 7;
 
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
-//        breakoutView = new BreakoutView(this);
         setContentView(R.layout.activity_game);
 
         paddleContainer = findViewById(R.id.paddleContainer);
@@ -70,14 +80,7 @@ public class GameActivity extends Activity implements View.OnTouchListener, View
         gameView = (GameView) findViewById(R.id.gameView);
         txtScore = (TextView) findViewById(R.id.textViewScore);
         container = (ConstraintLayout) findViewById(R.id.container);
-
-//        int[] out = new int[2];
-//        Rect outRect = new Rect();
-//        container.getLocationOnScreen(out);
-//        container.getDrawingRect(outRect);
-//        ConstraintLayout.LayoutParams gameViewLayoutParams = (ConstraintLayout.LayoutParams) gameView.getLayoutParams();
-//        gameViewLayoutParams.height = container.getHeight() - paddleContainer.getHeight();
-//        gameView.setLayoutParams(gameViewLayoutParams);
+        parentLayout = (RelativeLayout) findViewById(R.id.parentLayout);
 
         imgPause.setOnClickListener(this);
 
@@ -90,17 +93,36 @@ public class GameActivity extends Activity implements View.OnTouchListener, View
 
         gameView.setPaddle(this, paddle);
 
+        soundPool = new SoundPool(6, AudioManager.STREAM_MUSIC, 100);
+        soundPoolMap = new HashMap(7);
+        soundPoolMap.put(GAME_START, soundPool.load(this, R.raw.game_start, 1));
+        soundPoolMap.put(GAME_OVER, soundPool.load(this, R.raw.game_over, 1));
+        soundPoolMap.put(GAME_PAUSE, soundPool.load(this, R.raw.game_pause, 1));
+        soundPoolMap.put(GAME_RESUME, soundPool.load(this, R.raw.game_pause, 1));
+        soundPoolMap.put(BRICK_BROKEN, soundPool.load(this, R.raw.brick_break, 1));
+        soundPoolMap.put(LIFE_GONE, soundPool.load(this, R.raw.life_gone, 1));
+        soundPoolMap.put(VICTORY, soundPool.load(this, R.raw.victory, 1));
+
         initializeGame();
+    }
+
+    @Override
+    public void onWindowFocusChanged(boolean hasFocus) {
+        if (hasFocus && !hasGameStarted) {
+            showDefinition(new LinearLayout(this), R.string.start_game_text, R.mipmap.ic_start);
+        }
     }
 
     @Override
     public void onResume()
     {
         super.onResume();
-        paddleContainer.setOnTouchListener(this);
-        paddle.setOnTouchListener(this);
-        sensorManager.registerListener(this, accelerometerSensor, SensorManager.SENSOR_DELAY_GAME);
-        gameView.resumeGame();
+        if(hasGameStarted) {
+            paddleContainer.setOnTouchListener(this);
+            paddle.setOnTouchListener(this);
+            sensorManager.registerListener(this, accelerometerSensor, SensorManager.SENSOR_DELAY_GAME);
+            gameView.resumeGame();
+        }
     }
 
     @Override
@@ -116,20 +138,11 @@ public class GameActivity extends Activity implements View.OnTouchListener, View
     public boolean onTouch(View view, MotionEvent event) {
         switch (view.getId()) {
             case R.id.paddleContainer:
-                if(!hasGameStarted) {
-                    gameView.startGame();
-                    hasGameStarted = true;
-                    return true;
-                }
-                final int X = (int) event.getRawX();
-                RelativeLayout.LayoutParams lParams;
+                final int x = (int) event.getRawX();
+
                 switch (event.getAction() & MotionEvent.ACTION_MASK) {
                     case MotionEvent.ACTION_DOWN:
-                        lParams = (RelativeLayout.LayoutParams) paddle.getLayoutParams();
-                        lParams.leftMargin = X > paddle.getWidth() ? X - paddle.getWidth() : 0;
-                        paddleXRange[0] = lParams.leftMargin;
-                        paddleXRange[1] = paddleXRange[0] + paddleWidth;
-                        paddle.setLayoutParams(lParams);
+                        updatePaddlePosition(x);
                         break;
                     case MotionEvent.ACTION_UP:
                         break;
@@ -138,13 +151,7 @@ public class GameActivity extends Activity implements View.OnTouchListener, View
                     case MotionEvent.ACTION_POINTER_UP:
                         break;
                     case MotionEvent.ACTION_MOVE:
-                        lParams = (RelativeLayout.LayoutParams) paddle.getLayoutParams();
-                        lParams.leftMargin = X > paddle.getWidth() ? X - paddle.getWidth() : 0;
-                        if ((lParams.leftMargin + paddle.getWidth()) > view.getWidth())
-                            lParams.leftMargin = view.getWidth() - paddle.getWidth();
-                        paddleXRange[0] = lParams.leftMargin;
-                        paddleXRange[1] = paddleXRange[0] + paddleWidth;
-                        paddle.setLayoutParams(lParams);
+                        updatePaddlePosition(x);
                         break;
                 }
                 paddleContainer.invalidate();
@@ -154,6 +161,28 @@ public class GameActivity extends Activity implements View.OnTouchListener, View
                 return false;
         }
         return true;
+    }
+
+    private void updatePaddlePosition(int x) {
+        RelativeLayout.LayoutParams lParams;
+        lParams = (RelativeLayout.LayoutParams) paddle.getLayoutParams();
+        lParams.leftMargin = x > paddle.getWidth() ? x - paddle.getWidth() : 0;
+        if ((lParams.leftMargin + paddle.getWidth()) > paddleContainer.getWidth())
+            lParams.leftMargin = paddleContainer.getWidth() - paddle.getWidth();
+        paddleXRange[0] = lParams.leftMargin;
+        paddleXRange[1] = paddleXRange[0] + paddleWidth;
+        paddle.setLayoutParams(lParams);
+    }
+
+    private void updatePaddlePositionwithDelta(int x) {
+        RelativeLayout.LayoutParams lParams;
+        lParams = (RelativeLayout.LayoutParams) paddle.getLayoutParams();
+        lParams.leftMargin = (lParams.leftMargin + x) < 0 ? 0 : lParams.leftMargin + x;
+        if ((lParams.leftMargin + paddle.getWidth()) > paddleContainer.getWidth())
+            lParams.leftMargin = paddleContainer.getWidth() - paddle.getWidth();
+        paddleXRange[0] = lParams.leftMargin;
+        paddleXRange[1] = paddleXRange[0] + paddleWidth;
+        paddle.setLayoutParams(lParams);
     }
 
     @Override
@@ -166,6 +195,7 @@ public class GameActivity extends Activity implements View.OnTouchListener, View
                     paddle.setOnTouchListener(this);
                     gameView.resumeGame();
                     sensorManager.registerListener(this, accelerometerSensor, SensorManager.SENSOR_DELAY_GAME);
+                    playMusic(GAME_PAUSE);
                 }
                 else {
                     imgPause.setImageResource(R.mipmap.ic_play);
@@ -173,6 +203,8 @@ public class GameActivity extends Activity implements View.OnTouchListener, View
                     paddle.setOnTouchListener(null);
                     gameView.pauseGame();
                     sensorManager.unregisterListener(this);
+                    playMusic(GAME_PAUSE);
+                    showDefinition(new LinearLayout(this), R.string.resume_game_text, R.mipmap.ic_start);
                 }
                 isPause = !isPause;
                 break;
@@ -181,6 +213,7 @@ public class GameActivity extends Activity implements View.OnTouchListener, View
 
     public void decreaseLife() {
         currentLifes--;
+        playMusic(LIFE_GONE);
         switch (currentLifes) {
             case 0:
                 imgLife1.setImageResource(R.mipmap.ic_dead);
@@ -206,6 +239,7 @@ public class GameActivity extends Activity implements View.OnTouchListener, View
         imgLife3.setImageResource(R.mipmap.ic_life);
         gameView.initialize(true);
         increaseScore(-score);
+        playMusic(GAME_START);
     }
 
     public void increaseScore(int delta) {
@@ -225,32 +259,43 @@ public class GameActivity extends Activity implements View.OnTouchListener, View
         gameView.pauseGame();
     }
 
+    public void playMusic(int type) {
+        switch (type) {
+            case GAME_START:
+                soundPool.play(soundPoolMap.get(type), (float) 0.8, (float) 0.8, 1, 0, 1f);
+                break;
+
+            case LIFE_GONE:
+                soundPool.play(soundPoolMap.get(type), 1, 1, 1, 0, 1f);
+                ((Vibrator)getSystemService(VIBRATOR_SERVICE)).vibrate(300);
+                break;
+
+            default:
+                soundPool.play(soundPoolMap.get(type), 1, 1, 1, 0, 1f);
+                break;
+        }
+    }
+
+    private void startGame() {
+        hasGameStarted = true;
+        gameView.startGame();
+    }
 
     @Override
     public void onSensorChanged(SensorEvent event) {
         if(event.sensor.getType() == Sensor.TYPE_ACCELEROMETER) {
             float new_x = event.values[0];
-            float new_y = event.values[1];
-            float new_z = event.values[2];
 
             long currentTimestamp = System.currentTimeMillis();
 
             if((currentTimestamp - lastUpdateTimestamp) > 100) {
-                long timeDifference = currentTimestamp - lastUpdateTimestamp;
                 lastUpdateTimestamp = currentTimestamp;
 
-                float movementSpeed = Math.abs(new_x + new_y + new_z - recent_x - recent_y - recent_z) / (timeDifference * 1000);
-
-//                if(movementSpeed > MIN_SHAKE) {
-                    System.out.print(movementSpeed);
-                    System.out.print(new_x);
-                    System.out.print(new_y);
-                    System.out.print(new_z);
-//                }
+                if(Math.abs(recent_x - new_x) > 1) {
+                    updatePaddlePositionwithDelta((int) ((recent_x - new_x) * 50));
+                }
 
                 recent_x = new_x;
-                recent_y = new_y;
-                recent_z = new_z;
             }
         }
     }
@@ -260,238 +305,39 @@ public class GameActivity extends Activity implements View.OnTouchListener, View
 
     }
 
-    class BreakoutView extends SurfaceView implements Runnable {
+    private void showDefinition(View v, int messageId, int buttonId) {
 
-        Thread gameThread = null;
-        SurfaceHolder holder = null;
-        Paint paint = new Paint();
-        volatile boolean isPlaying;
-        boolean paused = true;
-        Canvas canvas;
+        LayoutInflater layoutInflater = (LayoutInflater) getSystemService(Context.LAYOUT_INFLATER_SERVICE);
 
-        Paddle paddle;
-        Ball ball;
+        final View inflatedView = layoutInflater.inflate(R.layout.start_game_popup, parentLayout, false);
 
-        int screenX;
-        int screenY;
+        TextView popupTextView = (TextView) inflatedView.findViewById(R.id.txtViewContent);
+        popupTextView.setText(getResources().getString(messageId));
 
-        private long currentFrameTime;
-        long fps;
 
-        Brick[] bricks = new Brick[200];
-        int brickCount=0;
-        Life[] lifeSymbols = new Life[3];
-        int score;
-        int lives;
+        ImageView actionButton = (ImageView) inflatedView.findViewById(R.id.btnGo);
+        actionButton.setImageResource(buttonId);
 
-        public BreakoutView(Context context)
-        {
-            super(context);
+        Display display = getWindowManager().getDefaultDisplay();
+        final Point size = new Point();
+        display.getSize(size);
 
-            holder = getHolder();
-            paint = new Paint();
+        // set height depends on the device size
+        popWindow = new PopupWindow(inflatedView, (int)(size.x * 0.6), (int) (size.y * 0.4), true);
 
-            Display display = getWindowManager().getDefaultDisplay();
-            Point size = new Point();
-            display.getSize(size);
-
-            screenX = size.x;
-            screenY = size.y;
-            paddle = new Paddle(screenX,screenY);
-
-            ball = new Ball(screenX, 1000);
-            isPlaying = true;
-
-            score = 0;
-            lives = 3;
-
-            int left = 0;
-            for (int i=0;i<lives;i++)
-            {
-                lifeSymbols[i] = new Life(left, 1010, left + 10, 1020);
-                left = left + 20;
+        actionButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                popWindow.dismiss();
+                startGame();
             }
+        });
 
-            createBricks();
-        }
-
-        public void createBricks()
-        {
-            ball.reset(screenX, 1000);
-            int brickWidth = screenX/4;
-            int brickHeight = 1000/10;
-
-            brickCount = 0;
-
-            for (int col=0;col<4;col++)
-            {
-                for (int row = 0;row<4;row++)
-                {
-                    bricks[brickCount] = new Brick(row+1, col, brickWidth, brickHeight);
-                    brickCount++;
-                }
-            }
-        }
-
-        @Override
-        public void run() {
-            while(isPlaying) {
-                long startTime = System.currentTimeMillis();
-                if (!paused) {
-                    update();
-                }
-                currentFrameTime = System.currentTimeMillis() - startTime;
-                if (currentFrameTime>=1)
-                    fps = 1000 / currentFrameTime;
-
-                draw();
-            }
-        }
-
-        public void draw()
-        {
-            if (holder.getSurface().isValid())
-            {
-                canvas = holder.lockCanvas();
-                canvas.drawColor(Color.argb(255, 26, 128,182));
-                paint.setColor(Color.argb(255,255,255,255));
-
-                paint.setTextSize(40);
-                canvas.drawText(Integer.toString(score), screenX - 100, 50, paint);
-                //System.out.println(paddle.getRect());
-                canvas.drawRect(paddle.getRect(), paint);
-                canvas.drawRect(ball.getRect(), paint);
-
-                paint.setColor(Color.argb(255,249,129,0));
-                for(int i=0;i<brickCount;i++)
-                {
-                    if(bricks[i].getVisibility() == true)
-                    {
-                        canvas.drawRect(bricks[i].getRect(), paint);
-                    }
-                }
-
-                if (score == brickCount * 10)
-                {
-                    paint.setTextSize(90);
-                    canvas.drawText("You have won", 10, screenY/2, paint);
-                }
-
-                if (lives <= 0)
-                {
-                    paint.setTextSize(90);
-                    canvas.drawText("You have lost", 10, screenY/2, paint);
-                } else {
-                    paint.setColor(Color.argb(255,255,255,255));
-                    for (int i=0;i<lives;i++)
-                    {
-                        if (lifeSymbols[i].getVisibility())
-                        {
-                            canvas.drawRect(lifeSymbols[i].getRect(), paint);
-                        }
-                    }
-                }
-                holder.unlockCanvasAndPost(canvas);
-            }
-        }
-
-        public void pause()
-        {
-            isPlaying = false;
-            try {
-                gameThread.join();
-            } catch (InterruptedException e)
-            {
-                //Log.e("Error joing")
-            }
-
-        }
-
-        public void resume()
-        {
-            isPlaying = true;
-            gameThread = new Thread(this);
-            gameThread.start();
-        }
-
-        public void update()
-        {
-            paddle.update(fps);
-            ball.update(fps);
-            for (int i=0;i<brickCount;i++)
-            {
-                if (bricks[i].getVisibility())
-                {
-                    if (RectF.intersects(bricks[i].getRect(), ball.getRect()))
-                    {
-                        bricks[i].setInvisible();
-                        ball.reverseYVelocity();
-                        score = score + 10;
-                    }
-                }
-            }
-            if (RectF.intersects(paddle.getRect(), ball.getRect()))
-            {
-                ball.setRandomXVelocity();
-                ball.reverseYVelocity();
-                ball.clearObstacleY(paddle.getRect().top -2);
-            }
-
-            if (ball.getRect().left < 0)
-            {
-                ball.reverseXVelocity();
-                ball.clearObstacleX(2);
-            }
-
-            if (ball.getRect().right > screenX -10)
-            {
-                ball.reverseXVelocity();
-                ball.clearObstacleX(screenX - 22);
-            }
-
-            if (ball.getRect().bottom > 1000)
-            {
-                ball.reverseYVelocity();
-                //ball.clearObstacleY(screenY - 2);
-                System.out.println("Lives is "+ lives);
-                lives--;
-                lifeSymbols[lives].setInvisible();
-                if (lives == 0)
-                {
-                    paused = true;
-                    createBricks();
-                }
-            }
-
-            if (ball.getRect().top < (1000/10))
-            {
-                ball.reverseYVelocity();
-                ball.clearObstacleY(12);
-            }
-        }
-
-        @Override
-        public boolean onTouchEvent(MotionEvent motionEvent)
-        {
-            switch(motionEvent.getAction() & MotionEvent.ACTION_MASK)
-            {
-                case MotionEvent.ACTION_DOWN:
-                    paused = false;
-                    if (motionEvent.getX() > screenX/2)
-                    {
-                        paddle.setMovementState(paddle.RIGHT);
-                    } else {
-                        paddle.setMovementState(paddle.LEFT);
-                    }
-                    break;
-
-                case MotionEvent.ACTION_UP:
-                    paddle.setMovementState(paddle.STOPPED);
-                    break;
-            }
-            return true;
-        }
+        popWindow.setAnimationStyle(R.style.popupAnimation);
+        popWindow.setFocusable(true);
+        popWindow.setBackgroundDrawable(ContextCompat.getDrawable(this, R.drawable.popup_background_drawable));
+        popWindow.setOutsideTouchable(false);
+        popWindow.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_HIDDEN);
+        popWindow.showAtLocation(v, Gravity.CENTER, 0, 0);
     }
-
-
 }
