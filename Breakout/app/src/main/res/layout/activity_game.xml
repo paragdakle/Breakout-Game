@@ -85,7 +85,7 @@
 
         <com.hci.project.breakout.custom.GameView
             android:layout_width="0dp"
-            android:layout_height="530dp"
+            android:layout_height="540dp"
             android:id="@+id/gameView"
             app:layout_constraintLeft_toLeftOf="parent"
             app:layout_constraintRight_toRightOf="parent"

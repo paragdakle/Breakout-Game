@@ -102,11 +102,6 @@ public class GameView extends View {
     /*Draw all the objects on the view
     * Author: Parag Dakle*/
     protected void onDraw(Canvas c) {
-        if(isPause) {
-            c.drawBitmap(ball.getBitmap(), ballX, ballY, null);
-            drawBricks(c);
-            return;
-        }
         if(isRestart) {
             int rows = 4;
             int columns = this.getWidth() / ball.getBitmap().getWidth();
@@ -118,7 +113,12 @@ public class GameView extends View {
             }
             isRestart = false;
         }
-        if ((ballX < 0 && ballY < 0) || isNewLife) {
+        if(isPause) {
+            c.drawBitmap(ball.getBitmap(), ballX, ballY, null);
+            drawBricks(c);
+            return;
+        }
+        if ((ballX < 0 && ballY < 0) || isNewLife || !GameActivity.hasGameStarted) {
             if(this.activity != null) {
                 ballX = activity.getPaddleMean();
             }
@@ -128,7 +128,7 @@ public class GameView extends View {
             c.drawBitmap(ball.getBitmap(), ballX, ballY, null);
             drawBricks(c);
             isNewLife = false;
-        } else {
+        } else if(GameActivity.hasGameStarted){
             if(ticker % 50 == 0)
                 activity.increaseScore(-1);
             ballX += xVelocity;
