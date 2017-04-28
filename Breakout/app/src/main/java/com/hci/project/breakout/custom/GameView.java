@@ -51,8 +51,8 @@ public class GameView extends View {
         h = new Handler();
         activity = null;
         ball = (BitmapDrawable) ContextCompat.getDrawable(mContext, R.drawable.volleyball);
-        brick1 = (BitmapDrawable) ContextCompat.getDrawable(mContext, R.drawable.brick);
-        brick2 = (BitmapDrawable) ContextCompat.getDrawable(mContext, R.drawable.brick64);
+        brick1 = (BitmapDrawable) ContextCompat.getDrawable(mContext, R.drawable.brick_red);
+        brick2 = (BitmapDrawable) ContextCompat.getDrawable(mContext, R.drawable.brick_yellow);
     }
 
     private Runnable r = new Runnable() {
@@ -103,7 +103,7 @@ public class GameView extends View {
     * Author: Parag Dakle*/
     protected void onDraw(Canvas c) {
         if(isRestart) {
-            int rows = 1;
+            int rows = 4;
             int columns = (int) Math.ceil(this.getWidth() / brick1.getBitmap().getWidth());
             bricks = new int[rows][columns + 1];
             for(int i = 0; i < bricks.length; i++) {
