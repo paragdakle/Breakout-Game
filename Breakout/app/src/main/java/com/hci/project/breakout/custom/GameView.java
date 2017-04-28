@@ -1,3 +1,15 @@
+/*=============================================================================
+ |   Assignment:  CS6326 Project
+ |       Author:  Parag Dakle, Raunak Sabhani
+ |     Language:  Android
+ |    File Name:  GameView.java
+ |
+ +-----------------------------------------------------------------------------
+ |
+ |  Description:  A breakout game
+ |
+ |  File Purpose: Class which contains the view of the game
+ *===========================================================================*/
 package com.hci.project.breakout.custom;
 
 import android.content.Context;
@@ -11,10 +23,6 @@ import android.view.View;
 
 import com.hci.project.breakout.R;
 import com.hci.project.breakout.activity.GameActivity;
-
-/**
- * Created by root on 24/4/17.
- */
 
 public class GameView extends View {
 
@@ -35,6 +43,8 @@ public class GameView extends View {
     int[][] bricks;
     BitmapDrawable ball, brick1, brick2;
 
+    /*Constructor for gameview class
+    * Author: Parag Dakle*/
     public GameView(Context context, AttributeSet attrs) {
         super(context, attrs);
         mContext = context;
@@ -52,30 +62,45 @@ public class GameView extends View {
         }
     };
 
+    /*Initialize paddle
+      Author: Raunak Sabhani
+     */
     public void setPaddle(GameActivity activity, View paddle) {
         this.paddle = paddle;
         this.activity = activity;
     }
 
+    /*Start the game
+      Author: Raunak Sabhani
+     */
     public void startGame() {
         h.postDelayed(r, FRAME_RATE);
     }
 
+    /*Initialize variables
+    Author: Parag Dakle
+     */
     public void initialize(boolean fullRestart) {
         isNewLife = true;
         isRestart = fullRestart;
         invalidate();
     }
 
+    /*Pause the game
+    * Author: Raunak Sabhani*/
     public void pauseGame() {
         isPause = true;
     }
 
+    /*Resume the game
+    * Author: Raunak Sabhani*/
     public void resumeGame() {
         isPause = false;
         h.postDelayed(r, FRAME_RATE);
     }
 
+    /*Draw all the objects on the view
+    * Author: Parag Dakle*/
     protected void onDraw(Canvas c) {
         if(isPause) {
             c.drawBitmap(ball.getBitmap(), ballX, ballY, null);
@@ -141,6 +166,8 @@ public class GameView extends View {
         ticker++;
     }
 
+    /*Check if the ball intersects with any of the bricks
+    * Author: Parag Dakle*/
     private boolean checkIfBrickIntersects(int ballX, int ballY) {
         boolean hasIntersect = false;
         RectF ballRect, brickRect;
@@ -168,6 +195,8 @@ public class GameView extends View {
         return hasIntersect;
     }
 
+    /*Draw the bricks on the screen
+    * Author: Raunak Sabhani*/
     private boolean drawBricks(Canvas c) {
         boolean brickDrawn = false;
         for (int j = 0; j < bricks.length; j++) {

@@ -1,3 +1,15 @@
+/*=============================================================================
+ |   Assignment:  CS6326 Project
+ |       Author:  Parag Dakle, Raunak Sabhani
+ |     Language:  Android
+ |    File Name:  MainActivity.java
+ |
+ +-----------------------------------------------------------------------------
+ |
+ |  Description:  A breakout game
+ |
+ |  File Purpose: Contains the main options of the game
+ *===========================================================================*/
 package com.hci.project.breakout.activity;
 
 import android.content.Intent;
@@ -9,14 +21,13 @@ import android.widget.Toast;
 
 import com.hci.project.breakout.R;
 
-/**
- * Created by root on 13/4/17.
- */
-
 public class MainActivity extends AppCompatActivity implements View.OnClickListener {
 
     Button btnStartNewGame, btnShowLeaderBoard;
 
+    /*Constructor for the main activity class
+      Author: Parag Dakle
+     */
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -29,6 +40,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         btnShowLeaderBoard.setOnClickListener(this);
     }
 
+    /* Onclick listener of the buttons
+      Author: Raunak Sabhani
+     */
     @Override
     public void onClick(View v) {
         switch (v.getId()) {
@@ -38,7 +52,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 break;
 
             case R.id.btnShowLeaderBoard:
-                Intent i = new Intent(MainActivity.this, LeaderBoard.class);
+                Intent i = new Intent(MainActivity.this, LeaderBoardActivity.class);
                 startActivity(i);
                 //Toast.makeText(MainActivity.this, "First play to see high scores!", Toast.LENGTH_LONG).show();
                 break;

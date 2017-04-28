@@ -1,3 +1,15 @@
+/*=============================================================================
+ |   Assignment:  CS6326 Project
+ |       Author:  Parag Dakle, Raunak Sabhani
+ |     Language:  Android
+ |    File Name:  LeaderBoardActivity.java
+ |
+ +-----------------------------------------------------------------------------
+ |
+ |  Description:  A breakout game
+ |
+ |  File Purpose: Displays the top 5 scores of application
+ *===========================================================================*/
 package com.hci.project.breakout.activity;
 
 import android.content.SharedPreferences;
@@ -16,6 +28,10 @@ import java.util.List;
 public class LeaderBoardActivity extends AppCompatActivity {
 
     public List<Scorer> scorerList= new ArrayList<Scorer>();
+
+    /*Constructor for leaderboard activity
+      Author: Raunak Sabhani
+     */
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -35,6 +51,9 @@ public class LeaderBoardActivity extends AppCompatActivity {
         loadTextViews();
     }
 
+    /* Load all text views with the required scores
+       Author: Parag Dakle
+     */
     public void loadTextViews()
     {
         TextView tv1;

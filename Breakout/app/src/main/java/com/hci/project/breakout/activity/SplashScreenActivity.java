@@ -1,3 +1,15 @@
+/*=============================================================================
+ |   Assignment:  CS6326 Project
+ |       Author:  Parag Dakle, Raunak Sabhani
+ |     Language:  Android
+ |    File Name:  SplashScreenActivity.java
+ |
+ +-----------------------------------------------------------------------------
+ |
+ |  Description:  A breakout game
+ |
+ |  File Purpose: Splash screen of application
+ *===========================================================================*/
 package com.hci.project.breakout.activity;
 
 import android.content.Context;
@@ -16,35 +28,30 @@ import java.util.List;
 public class SplashScreenActivity extends AppCompatActivity {
 
     public static List<Scorer> listScorer = new ArrayList<>();
+
+    /*Constructor for the splash screen activity
+    * Author: Parag Dakle*/
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_splash_screen);
         GetScorers getScorers = new GetScorers(this);
         getScorers.execute();
-        /*new Handler().postDelayed(new Runnable() {
-
-            // Using handler with postDelayed called runnable run method
-
-            @Override
-            public void run() {
-                Intent i = new Intent(SplashScreenActivity.this, MainActivity.class);
-                startActivity(i);
-
-                // close this activity
-                finish();
-            }
-        }, 3 * 1000);*/
     }
 
     private class GetScorers extends AsyncTask<Void, Void, List<Scorer>>
     {
         private Context mContext;
 
+        /*Constructor for getscorers asynctask
+        * Author: Parag Dakle*/
         public GetScorers(Context context)
         {
             this.mContext = context;
         }
+
+        /*Get all high scores from the shared preferences
+        * Author: Raunak Sabhani*/
         @Override
         protected List<Scorer> doInBackground(Void... params) {
             List<Scorer> listScorer = new ArrayList<Scorer>();

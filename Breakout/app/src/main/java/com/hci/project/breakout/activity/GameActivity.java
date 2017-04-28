@@ -1,3 +1,15 @@
+/*=============================================================================
+ |   Assignment:  CS6326 Project
+ |       Author:  Parag Dakle, Raunak Sabhani
+ |     Language:  Android
+ |    File Name:  GameActivity.java
+ |
+ +-----------------------------------------------------------------------------
+ |
+ |  Description:  A breakout game
+ |
+ |  File Purpose: Game class which handles all game activities
+ *===========================================================================*/
 package com.hci.project.breakout.activity;
 
 import android.app.Activity;
@@ -31,6 +43,7 @@ import android.widget.TextView;
 
 import com.hci.project.breakout.R;
 import com.hci.project.breakout.custom.GameView;
+import com.hci.project.breakout.model.Scorer;
 
 import java.util.HashMap;
 import java.util.Collections;
@@ -72,6 +85,8 @@ public class GameActivity extends Activity implements View.OnTouchListener, View
     public final int VICTORY = 7;
 
 
+    /*Set up all objects and initialize game
+    * Author: Parag Dakle*/
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -112,6 +127,8 @@ public class GameActivity extends Activity implements View.OnTouchListener, View
         initializeGame();
     }
 
+    /*Display start game text
+    * Author: Raunak Sabhani*/
     @Override
     public void onWindowFocusChanged(boolean hasFocus) {
         if (hasFocus && !hasGameStarted) {
@@ -119,6 +136,8 @@ public class GameActivity extends Activity implements View.OnTouchListener, View
         }
     }
 
+    /*Handle onResume event
+    * Author: Raunak Sabhani*/
     @Override
     public void onResume()
     {
@@ -131,6 +150,8 @@ public class GameActivity extends Activity implements View.OnTouchListener, View
         }
     }
 
+    /*Handle onPause event
+    * Author: Parag Dakle*/
     @Override
     public void onPause() {
         super.onPause();
@@ -140,6 +161,8 @@ public class GameActivity extends Activity implements View.OnTouchListener, View
         gameView.pauseGame();
     }
 
+    /*Move paddle according to touch event
+    * Author: Parag Dakle*/
     @Override
     public boolean onTouch(View view, MotionEvent event) {
         switch (view.getId()) {
@@ -169,6 +192,8 @@ public class GameActivity extends Activity implements View.OnTouchListener, View
         return true;
     }
 
+    /*Update the paddle position
+    * Author: Raunak Sabhani*/
     private void updatePaddlePosition(int x) {
         RelativeLayout.LayoutParams lParams;
         lParams = (RelativeLayout.LayoutParams) paddle.getLayoutParams();
@@ -191,11 +216,12 @@ public class GameActivity extends Activity implements View.OnTouchListener, View
         paddle.setLayoutParams(lParams);
     }
 
+    /*Handle pause and resume game click events
+    * Author: Parag Dakle*/
     @Override
     public void onClick(View v) {
         switch (v.getId()) {
             case R.id.imgPause:
-                endGame();
                 if(isPause) {
                     imgPause.setImageResource(R.mipmap.ic_pause);
                     paddleContainer.setOnTouchListener(this);
@@ -218,6 +244,8 @@ public class GameActivity extends Activity implements View.OnTouchListener, View
         }
     }
 
+    /*Decrease life of users
+    * Author: Raunak Sabhani*/
     public void decreaseLife() {
         currentLifes--;
         playMusic(LIFE_GONE);
@@ -236,6 +264,8 @@ public class GameActivity extends Activity implements View.OnTouchListener, View
         if(currentLifes == 0) endGame();
     }
 
+    /*Initialize the game
+    * Author: Raunak Sabhani*/
     private void initializeGame() {
         if(score != 0) {
             //show score popup
@@ -249,19 +279,27 @@ public class GameActivity extends Activity implements View.OnTouchListener, View
         playMusic(GAME_START);
     }
 
+    /*Increase the score
+    * Author: Parag Dakle*/
     public void increaseScore(int delta) {
         score += delta;
         txtScore.setText(String.valueOf(score));
     }
 
+    /*Check if ball on paddle
+    * Author: Parag Dakle*/
     public boolean isOnPaddle(int x) {
         return (x > paddleXRange[0] && paddleXRange[1] > x);
     }
 
+    /*Get paddle mean to place ball
+    * Author: Raunak Sabhani*/
     public int getPaddleMean() {
         return (paddleXRange[0] + paddleXRange[1]) / 2;
     }
 
+    /*End the game. Update the score
+    * Author: Parag Dakle*/
     public void endGame() {
 
         System.out.println("In end game");
@@ -305,10 +343,13 @@ public class GameActivity extends Activity implements View.OnTouchListener, View
                     editor.putString(keyname + i, SplashScreenActivity.listScorer.get(i).toSharedPreferenceString());
                 }
                 editor.commit();
+                popWindow.dismiss();
             }
         });
     }
 
+    /*Play sounds of different events
+    * Author: Raunak Sabhani*/
     public void playMusic(int type) {
         switch (type) {
             case GAME_START:
@@ -326,11 +367,15 @@ public class GameActivity extends Activity implements View.OnTouchListener, View
         }
     }
 
+    /*start the game
+    * Author: Parag Dakle*/
     private void startGame() {
         hasGameStarted = true;
         gameView.startGame();
     }
 
+    /*Handle sensor activities
+    * Author: Raunak Sabhani*/
     @Override
     public void onSensorChanged(SensorEvent event) {
         if(event.sensor.getType() == Sensor.TYPE_ACCELEROMETER) {
@@ -355,6 +400,8 @@ public class GameActivity extends Activity implements View.OnTouchListener, View
 
     }
 
+    /*Show the popup view
+    * Author: Parag Dakle*/
     private void showDefinition(View v, int messageId, int buttonId) {
 
         LayoutInflater layoutInflater = (LayoutInflater) getSystemService(Context.LAYOUT_INFLATER_SERVICE);
