@@ -2,7 +2,6 @@ package com.hci.project.breakout.activity;
 
 import android.content.Context;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
@@ -10,7 +9,6 @@ import android.support.v7.app.AppCompatActivity;
 import com.hci.project.breakout.R;
 import com.hci.project.breakout.model.Scorer;
 
-import java.util.ArrayList;
 import java.util.List;
 
 public class SplashScreenActivity extends AppCompatActivity {
@@ -46,19 +44,20 @@ public class SplashScreenActivity extends AppCompatActivity {
         }
         @Override
         protected List<Scorer> doInBackground(Void... params) {
-            ScorersManager manager;
-            List<Scorer> listScorer = new ArrayList<Scorer>();
-            int score = 10;
-            for (int i=0;i<5;i++)
-            {
-                Scorer newScorer = new Scorer("Raunak", score);
-                score = score + 10;
-                listScorer.add(newScorer);
-            }
-            System.out.println(listScorer.size());
-            manager = new ScorersManager(mContext);
-            manager.addScorers(listScorer);
-            return manager.getScorers();
+//            ScorersManager manager;
+//            List<Scorer> listScorer = new ArrayList<Scorer>();
+//            int score = 10;
+//            for (int i=0;i<5;i++)
+//            {
+//                Scorer newScorer = new Scorer("Raunak", score);
+//                score = score + 10;
+//                listScorer.add(newScorer);
+//            }
+//            System.out.println(listScorer.size());
+//            manager = new ScorersManager(mContext);
+//            manager.addScorers(listScorer);
+//            return manager.getScorers();
+            return null;
         }
 
         /*Notify on success
@@ -68,14 +67,14 @@ public class SplashScreenActivity extends AppCompatActivity {
         protected void onPostExecute(List<Scorer> object) {
             super.onPostExecute(object);
 
-            SharedPreferences pref = getApplicationContext().getSharedPreferences("ScorerPref", 0);
-            SharedPreferences.Editor editor = pref.edit();
-            String keyname = "Scorer";
-            for (int i=0;i<object.size();i++)
-            {
-                editor.putString(keyname+i, object.get(i).toSharedPreferenceString());
-            }
-            editor.commit();
+//            SharedPreferences pref = getApplicationContext().getSharedPreferences("ScorerPref", 0);
+//            SharedPreferences.Editor editor = pref.edit();
+//            String keyname = "Scorer";
+//            for (int i=0;i<object.size();i++)
+//            {
+//                editor.putString(keyname+i, object.get(i).toSharedPreferenceString());
+//            }
+//            editor.commit();
             Intent i = new Intent(SplashScreenActivity.this, MainActivity.class);
             startActivity(i);
             finish();

@@ -50,7 +50,7 @@ public class GameActivity extends Activity implements View.OnTouchListener, View
     private int currentLifes = 3;
     private int score = 0;
     private long lastUpdateTimestamp = 0;
-    private float recent_x;
+    private float recent_x = 0, recent_y = 0;
     private int paddleWidth = 300;
     public int[] paddleXRange = {0, paddleWidth};
 
@@ -64,6 +64,8 @@ public class GameActivity extends Activity implements View.OnTouchListener, View
     public final int BRICK_BROKEN = 5;
     public final int LIFE_GONE = 6;
     public final int VICTORY = 7;
+
+    public static boolean isMute = false;
 
 
     @Override
@@ -81,8 +83,6 @@ public class GameActivity extends Activity implements View.OnTouchListener, View
         txtScore = (TextView) findViewById(R.id.textViewScore);
         container = (ConstraintLayout) findViewById(R.id.container);
         parentLayout = (RelativeLayout) findViewById(R.id.parentLayout);
-
-        imgPause.setOnClickListener(this);
 
         sensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
         accelerometerSensor = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
@@ -109,7 +109,7 @@ public class GameActivity extends Activity implements View.OnTouchListener, View
     @Override
     public void onWindowFocusChanged(boolean hasFocus) {
         if (hasFocus && !hasGameStarted) {
-            showDefinition(new LinearLayout(this), R.string.start_game_text, R.mipmap.ic_start);
+            showPopup(new LinearLayout(this), getResources().getString(R.string.start_game_text), R.mipmap.ic_start);
         }
     }
 
@@ -135,11 +135,18 @@ public class GameActivity extends Activity implements View.OnTouchListener, View
     }
 
     @Override
+    public void onStop() {
+        super.onStop();
+        if(soundPool != null) {
+            soundPool.release();
+        }
+    }
+
+    @Override
     public boolean onTouch(View view, MotionEvent event) {
         switch (view.getId()) {
             case R.id.paddleContainer:
                 final int x = (int) event.getRawX();
-
                 switch (event.getAction() & MotionEvent.ACTION_MASK) {
                     case MotionEvent.ACTION_DOWN:
                         updatePaddlePosition(x);
@@ -174,41 +181,39 @@ public class GameActivity extends Activity implements View.OnTouchListener, View
         paddle.setLayoutParams(lParams);
     }
 
-    private void updatePaddlePositionwithDelta(int x) {
-        RelativeLayout.LayoutParams lParams;
-        lParams = (RelativeLayout.LayoutParams) paddle.getLayoutParams();
-        lParams.leftMargin = (lParams.leftMargin + x) < 0 ? 0 : lParams.leftMargin + x;
-        if ((lParams.leftMargin + paddle.getWidth()) > paddleContainer.getWidth())
-            lParams.leftMargin = paddleContainer.getWidth() - paddle.getWidth();
-        paddleXRange[0] = lParams.leftMargin;
-        paddleXRange[1] = paddleXRange[0] + paddleWidth;
-        paddle.setLayoutParams(lParams);
-    }
-
     @Override
     public void onClick(View v) {
         switch (v.getId()) {
             case R.id.imgPause:
                 if(isPause) {
-                    imgPause.setImageResource(R.mipmap.ic_pause);
-                    paddleContainer.setOnTouchListener(this);
-                    paddle.setOnTouchListener(this);
+                    resumeGame();
                     gameView.resumeGame();
-                    sensorManager.registerListener(this, accelerometerSensor, SensorManager.SENSOR_DELAY_GAME);
-                    playMusic(GAME_PAUSE);
+                    playMusic(GAME_RESUME);
                 }
                 else {
-                    imgPause.setImageResource(R.mipmap.ic_play);
-                    paddleContainer.setOnTouchListener(null);
-                    paddle.setOnTouchListener(null);
+                    pauseGame();
                     gameView.pauseGame();
-                    sensorManager.unregisterListener(this);
                     playMusic(GAME_PAUSE);
-                    showDefinition(new LinearLayout(this), R.string.resume_game_text, R.mipmap.ic_start);
                 }
                 isPause = !isPause;
                 break;
         }
+    }
+
+    private void resumeGame() {
+        imgPause.setImageResource(R.mipmap.ic_pause);
+        paddleContainer.setOnTouchListener(this);
+        paddle.setOnTouchListener(this);
+        sensorManager.registerListener(this, accelerometerSensor, SensorManager.SENSOR_DELAY_GAME);
+        imgPause.setOnClickListener(this);
+    }
+
+    private void pauseGame() {
+        paddleContainer.setOnTouchListener(null);
+        paddle.setOnTouchListener(null);
+        sensorManager.unregisterListener(this);
+        showPopup(new LinearLayout(this), getResources().getString(R.string.resume_game_text), R.mipmap.ic_start);
+        imgPause.setOnClickListener(null);
     }
 
     public void decreaseLife() {
@@ -224,21 +229,27 @@ public class GameActivity extends Activity implements View.OnTouchListener, View
             case 2:
                 imgLife3.setImageResource(R.mipmap.ic_dead);
         }
-        hasGameStarted = false;
         this.increaseScore(-200);
         if(currentLifes == 0) endGame();
+        else
+            showPopup(new LinearLayout(this), getResources().getString(R.string.start_game_text), R.mipmap.ic_start);
     }
 
     private void initializeGame() {
         if(score != 0) {
-            //show score popup
+            if(checkIfHighScore(score)) {
+
+            }
+            else {
+                showPopup(new LinearLayout(this), String.format(getResources().getString(R.string.score_text_message), score), R.mipmap.ic_restart);
+            }
         }
         currentLifes = 3;
         imgLife1.setImageResource(R.mipmap.ic_life);
         imgLife2.setImageResource(R.mipmap.ic_life);
         imgLife3.setImageResource(R.mipmap.ic_life);
         gameView.initialize(true);
-        increaseScore(-score);
+        increaseScore(0);
         playMusic(GAME_START);
     }
 
@@ -256,10 +267,16 @@ public class GameActivity extends Activity implements View.OnTouchListener, View
     }
 
     public void endGame() {
-        gameView.pauseGame();
+        hasGameStarted = false;
+        initializeGame();
+    }
+
+    private boolean checkIfHighScore(int score) {
+        return false;
     }
 
     public void playMusic(int type) {
+        if(isMute) return;
         switch (type) {
             case GAME_START:
                 soundPool.play(soundPoolMap.get(type), (float) 0.8, (float) 0.8, 1, 0, 1f);
@@ -278,6 +295,7 @@ public class GameActivity extends Activity implements View.OnTouchListener, View
 
     private void startGame() {
         hasGameStarted = true;
+        resumeGame();
         gameView.startGame();
     }
 
@@ -285,17 +303,22 @@ public class GameActivity extends Activity implements View.OnTouchListener, View
     public void onSensorChanged(SensorEvent event) {
         if(event.sensor.getType() == Sensor.TYPE_ACCELEROMETER) {
             float new_x = event.values[0];
+            float new_y = event.values[1];
 
             long currentTimestamp = System.currentTimeMillis();
 
             if((currentTimestamp - lastUpdateTimestamp) > 100) {
                 lastUpdateTimestamp = currentTimestamp;
 
-                if(Math.abs(recent_x - new_x) > 1) {
-                    updatePaddlePositionwithDelta((int) ((recent_x - new_x) * 50));
+                if(Math.abs(recent_x - new_x) > 2) {
+                    gameView.xVelocity += (gameView.xVelocity / Math.abs(gameView.xVelocity));
+                }
+                if(Math.abs(recent_y - new_y) > 3) {
+                    gameView.yVelocity += (gameView.yVelocity / Math.abs(gameView.yVelocity));
                 }
 
                 recent_x = new_x;
+                recent_y = new_y;
             }
         }
     }
@@ -305,14 +328,14 @@ public class GameActivity extends Activity implements View.OnTouchListener, View
 
     }
 
-    private void showDefinition(View v, int messageId, int buttonId) {
+    private void showPopup(View v, String message, final int buttonId) {
 
         LayoutInflater layoutInflater = (LayoutInflater) getSystemService(Context.LAYOUT_INFLATER_SERVICE);
 
         final View inflatedView = layoutInflater.inflate(R.layout.start_game_popup, parentLayout, false);
 
         TextView popupTextView = (TextView) inflatedView.findViewById(R.id.txtViewContent);
-        popupTextView.setText(getResources().getString(messageId));
+        popupTextView.setText(message);
 
 
         ImageView actionButton = (ImageView) inflatedView.findViewById(R.id.btnGo);
@@ -329,9 +352,28 @@ public class GameActivity extends Activity implements View.OnTouchListener, View
             @Override
             public void onClick(View v) {
                 popWindow.dismiss();
-                startGame();
+                if(buttonId == R.mipmap.ic_start && !hasGameStarted) {
+                    startGame();
+                }
+                else if(buttonId == R.mipmap.ic_start) {
+                    resumeGame();
+                    gameView.startGame();
+                }
+                else {
+                    score = 0;
+                    initializeGame();
+                }
             }
         });
+
+//        popWindow.setOnDismissListener(new PopupWindow.OnDismissListener() {
+//            @Override
+//            public void onDismiss() {
+//                if(buttonId == R.mipmap.ic_start && !hasGameStarted) {
+//                    hasGameStarted = true;
+//                }
+//            }
+//        });
 
         popWindow.setAnimationStyle(R.style.popupAnimation);
         popWindow.setFocusable(true);
