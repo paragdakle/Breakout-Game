@@ -172,6 +172,9 @@ public class GameActivity extends Activity implements View.OnTouchListener, View
         }
     }
 
+    /*Handle on touch events
+      Author: Raunak Sabhani
+     */
     @Override
     public boolean onTouch(View view, MotionEvent event) {
         switch (view.getId()) {
@@ -244,6 +247,9 @@ public class GameActivity extends Activity implements View.OnTouchListener, View
         imgPause.setOnClickListener(this);
     }
 
+    /* Pause the game
+      Author: Parag Dakle
+     */
     private void pauseGame() {
         paddleContainer.setOnTouchListener(null);
         paddle.setOnTouchListener(null);
@@ -252,6 +258,9 @@ public class GameActivity extends Activity implements View.OnTouchListener, View
         imgPause.setOnClickListener(null);
     }
 
+    /*Decrease life
+      Author: Parag Dakle
+     */
     public void decreaseLife() {
         currentLifes--;
         playMusic(LIFE_GONE);
