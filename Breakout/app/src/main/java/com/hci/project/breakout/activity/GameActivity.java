@@ -266,7 +266,9 @@ public class GameActivity extends Activity implements View.OnTouchListener, View
                 imgLife3.setImageResource(R.mipmap.ic_dead);
         }
         this.increaseScore(-200);
-        if(currentLifes == 0) endGame();
+        if(currentLifes == 0) {
+            endGame();
+        }
         else
             showPopup(new LinearLayout(this), getResources().getString(R.string.start_game_text), R.mipmap.ic_start);
     }
@@ -275,6 +277,7 @@ public class GameActivity extends Activity implements View.OnTouchListener, View
     * Author: Raunak Sabhani*/
     private void initializeGame() {
         if(score != 0) {
+            playMusic(VICTORY);
             if(checkIfHighScore(score)) {
                 showScorePopup(new LinearLayout(this));
             }
@@ -313,7 +316,6 @@ public class GameActivity extends Activity implements View.OnTouchListener, View
     /*End the game. Update the score
     * Author: Parag Dakle*/
     public void endGame() {
-
         hasGameStarted = false;
         initializeGame();
     }

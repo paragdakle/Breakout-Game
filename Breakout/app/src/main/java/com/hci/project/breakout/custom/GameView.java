@@ -103,11 +103,11 @@ public class GameView extends View {
     * Author: Parag Dakle*/
     protected void onDraw(Canvas c) {
         if(isRestart) {
-            int rows = 4;
-            int columns = this.getWidth() / ball.getBitmap().getWidth();
-            bricks = new int[rows][columns];
-            for(int i = 0; i < rows; i++) {
-                for (int j = 0; j < columns; j++) {
+            int rows = 1;
+            int columns = (int) Math.ceil(this.getWidth() / brick1.getBitmap().getWidth());
+            bricks = new int[rows][columns + 1];
+            for(int i = 0; i < bricks.length; i++) {
+                for (int j = 0; j < bricks[i].length; j++) {
                     bricks[i][j] = 2;
                 }
             }
@@ -142,7 +142,7 @@ public class GameView extends View {
                 if ((ballX > this.getWidth() - ball.getBitmap().getWidth()) || (ballX < 0)) {
                     xVelocity = xVelocity * -1;
                 }
-                if (ballY < 0) {
+                if (ballY < 0 + deltaY) {
                     yVelocity = yVelocity * -1;
                 }
                 if ((ballY > this.getHeight() - ball.getBitmap().getHeight())) {
@@ -161,6 +161,7 @@ public class GameView extends View {
             if(!drawBricks(c)) {
                 activity.endGame();
                 isRestart = isNewLife = true;
+                return;
             }
             h.postDelayed(r, FRAME_RATE);
         }
