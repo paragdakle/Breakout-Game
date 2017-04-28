@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/popup_background_drawable"
+    android:gravity="center"
+    android:id="@+id/popup"
+    android:padding="10dp">
+
+    <TextView
+        android:layout_height="wrap_content"
+        android:layout_width="wrap_content"
+        android:gravity="center"
+        android:text="@string/high_score_text"
+        android:textColor="@color/splashScreenLogoColor"
+        android:textSize="28sp"
+        android:textStyle="bold"
+        android:fontFamily="sans-serif-smallcaps"/>
+
+    <TextView
+        android:layout_height="wrap_content"
+        android:layout_width="wrap_content"
+        android:gravity="center"
+        android:layout_marginTop="15dp"
+        android:text="@string/add_to_leaderboard_text"
+        android:textColor="@color/splashScreenLogoColor"
+        android:textSize="24sp"
+        android:textStyle="bold"
+        android:fontFamily="sans-serif-smallcaps"/>
+
+    <EditText
+        android:layout_height="wrap_content"
+        android:layout_width="match_parent"
+        android:id="@+id/addScore"
+        android:gravity="center"
+        android:hint="@string/high_score_add_text"
+        android:textColor="@color/splashScreenLogoColor"
+        android:textSize="24sp"
+        android:textStyle="bold"
+        android:layout_margin="15dp"
+        android:fontFamily="sans-serif-smallcaps"/>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
+
+        <Button
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:text="Add Score"
+            android:id="@+id/addScoreButton"
+            android:layout_margin="5dp"
+            android:layout_weight="1"
+            style="@style/Base.Widget.AppCompat.Button.Borderless.Colored"
+            android:textColor="@android:color/white"/>
+
+        <Button
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:text="Cancel"
+            android:layout_margin="5dp"
+            android:id="@+id/cancelButton"
+            android:layout_weight="1"
+            style="@style/Base.Widget.AppCompat.Button.Borderless.Colored"
+            android:textColor="@android:color/white"/>
+
+    </LinearLayout>
+
+</LinearLayout>

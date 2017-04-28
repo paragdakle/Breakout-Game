@@ -27,13 +27,13 @@ import com.hci.project.breakout.activity.GameActivity;
 public class GameView extends View {
 
     private Context mContext;
-    int ballX = -1;
-    int ballY = -1;
+    public int ballX = -1;
+    public int ballY = -1;
     boolean isRestart = true;
     boolean isNewLife = true;
     boolean isPause = false;
-    private int xVelocity = 30;
-    private int yVelocity = 15;
+    public int xVelocity = 30;
+    public int yVelocity = 15;
     private int ticker = 0;
     private int deltaY = 0;
     private Handler h;
@@ -160,6 +160,7 @@ public class GameView extends View {
             c.drawBitmap(ball.getBitmap(), ballX, ballY, null);
             if(!drawBricks(c)) {
                 activity.endGame();
+                isRestart = isNewLife = true;
             }
             h.postDelayed(r, FRAME_RATE);
         }

@@ -17,13 +17,14 @@ import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.view.View;
 import android.widget.Button;
-import android.widget.Toast;
+import android.widget.ImageButton;
 
 import com.hci.project.breakout.R;
 
 public class MainActivity extends AppCompatActivity implements View.OnClickListener {
 
     Button btnStartNewGame, btnShowLeaderBoard;
+    ImageButton btnMute;
 
     /*Constructor for the main activity class
       Author: Parag Dakle
@@ -35,9 +36,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
         btnStartNewGame = (Button) findViewById(R.id.btnNewGame);
         btnShowLeaderBoard = (Button) findViewById(R.id.btnShowLeaderBoard);
+        btnMute = (ImageButton) findViewById(R.id.imgBtnMute);
 
         btnStartNewGame.setOnClickListener(this);
         btnShowLeaderBoard.setOnClickListener(this);
+        btnMute.setOnClickListener(this);
     }
 
     /* Onclick listener of the buttons
@@ -55,6 +58,16 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 Intent i = new Intent(MainActivity.this, LeaderBoardActivity.class);
                 startActivity(i);
                 //Toast.makeText(MainActivity.this, "First play to see high scores!", Toast.LENGTH_LONG).show();
+                break;
+
+            case R.id.imgBtnMute:
+                if(!GameActivity.isMute) {
+                    btnMute.setImageResource(R.mipmap.ic_mute);
+                }
+                else {
+                    btnMute.setImageResource(R.mipmap.ic_unmute);
+                }
+                GameActivity.isMute = !GameActivity.isMute;
                 break;
         }
     }
