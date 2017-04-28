@@ -42,7 +42,7 @@ public class GameActivity extends Activity implements View.OnTouchListener, View
     PopupWindow popWindow;
 
     boolean isPause = false;
-    boolean hasGameStarted = false;
+    public static boolean hasGameStarted = false;
 
     private SensorManager sensorManager;
     private Sensor accelerometerSensor;
@@ -248,8 +248,8 @@ public class GameActivity extends Activity implements View.OnTouchListener, View
         imgLife1.setImageResource(R.mipmap.ic_life);
         imgLife2.setImageResource(R.mipmap.ic_life);
         imgLife3.setImageResource(R.mipmap.ic_life);
-        gameView.initialize(true);
         increaseScore(0);
+        gameView.initialize(true);
         playMusic(GAME_START);
     }
 
@@ -310,10 +310,10 @@ public class GameActivity extends Activity implements View.OnTouchListener, View
             if((currentTimestamp - lastUpdateTimestamp) > 100) {
                 lastUpdateTimestamp = currentTimestamp;
 
-                if(Math.abs(recent_x - new_x) > 2) {
+                if(Math.abs(recent_x - new_x) > 2 && hasGameStarted) {
                     gameView.xVelocity += (gameView.xVelocity / Math.abs(gameView.xVelocity));
                 }
-                if(Math.abs(recent_y - new_y) > 3) {
+                if(Math.abs(recent_y - new_y) > 3 && hasGameStarted) {
                     gameView.yVelocity += (gameView.yVelocity / Math.abs(gameView.yVelocity));
                 }
 
@@ -365,15 +365,6 @@ public class GameActivity extends Activity implements View.OnTouchListener, View
                 }
             }
         });
-
-//        popWindow.setOnDismissListener(new PopupWindow.OnDismissListener() {
-//            @Override
-//            public void onDismiss() {
-//                if(buttonId == R.mipmap.ic_start && !hasGameStarted) {
-//                    hasGameStarted = true;
-//                }
-//            }
-//        });
 
         popWindow.setAnimationStyle(R.style.popupAnimation);
         popWindow.setFocusable(true);
